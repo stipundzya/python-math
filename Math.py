@@ -36,6 +36,8 @@ class MathTrainer:
                command=self.open_random_via_10_screen).grid(row=0, column=2, padx=10, pady=5)
      tk.Button(self.frame, text="Минус у 2х значных чисел", font=("Arial", 18), width=20, height=2,
                command=self.open_two_digit_subtraction_screen).grid(row=0, column=3, padx=10, pady=5)
+     tk.Button(self.frame, text="Минус с отрицательным результатом", font=("Arial", 18), width=20, height=2,
+               command=self.open_negative_result_subtraction_screen).grid(row=0, column=4, padx=10, pady=5)
 
 
 
@@ -46,6 +48,12 @@ class MathTrainer:
                    command=self.make_deduction_screen_callback(i)).grid(row=i, column=1, padx=10, pady=5)
          tk.Button(self.frame, text=f"Deduction via 10 - {i}", font=("Arial", 18), width=20, height=2,
                    command=self.make_deduction1020_callback(i)).grid(row=i, column=2, padx=10, pady=5)
+
+
+
+
+     tk.Button(self.frame, text="Минус: 1-значное из 2-значного", font=("Arial", 18), width=20, height=2,
+               command=self.open_no_borrow_subtraction_screen).grid(row=10, column=0, padx=10, pady=5)
 
 
 
@@ -74,6 +82,20 @@ class MathTrainer:
  def open_two_digit_subtraction_screen(self):
      subtraction_window = tk.Toplevel(self.root)
      TwoDigitSubtractionScreen(subtraction_window)
+
+
+
+
+ def open_negative_result_subtraction_screen(self):
+     negative_result_window = tk.Toplevel(self.root)
+     NegativeResultSubtractionScreen(negative_result_window)
+
+
+
+
+ def open_no_borrow_subtraction_screen(self):
+     no_borrow_window = tk.Toplevel(self.root)
+     NoBorrowSubtractionScreen(no_borrow_window)
 
 
 
@@ -1117,6 +1139,281 @@ class TwoDigitSubtractionScreen:
      self.correct_stats_label.config(text=f"Correct: {self.correct_count}")
      self.incorrect_stats_label.config(text=f"Incorrect: {self.incorrect_count}")
 
+
+class NegativeResultSubtractionScreen:
+ def __init__(self, root):
+     self.root = root
+     self.root.title("Минус с отрицательным результатом")
+     self.root.geometry("500x700")
+     self.root.configure(bg='lightblue')
+
+
+
+
+     self.back_button = tk.Button(root, text="Back", font=("Arial", 16), command=self.go_back)
+     self.back_button.pack(pady=10, anchor='nw', padx=10)
+
+
+
+
+     self.question_label = tk.Label(root, text="", font=("Arial", 32), bg='lightblue')
+     self.question_label.pack(pady=10)
+
+
+
+
+     self.buttons_frame = tk.Frame(root, bg='lightblue')
+     self.buttons_frame.pack(pady=20)
+
+
+
+
+     self.option_buttons = []
+     for _ in range(6):
+         button = tk.Button(self.buttons_frame, text="", font=("Arial", 24), width=5, height=2)
+         button.grid(row=_//3, column=_%3, padx=10, pady=10)
+         self.option_buttons.append(button)
+
+
+
+
+     self.result_label = tk.Label(root, text="", font=("Arial", 24), bg='lightblue')
+     self.result_label.pack(pady=20)
+
+
+
+
+     self.stats_frame = tk.Frame(root, bg='lightblue')
+     self.stats_frame.pack(pady=10)
+
+
+
+
+     self.correct_count = 0
+     self.incorrect_count = 0
+     self.correct_stats_label = tk.Label(self.stats_frame, text=f"Correct: {self.correct_count}", font=("Arial", 20), bg='lightblue', fg='green')
+     self.correct_stats_label.pack(side='left', padx=10)
+     self.incorrect_stats_label = tk.Label(self.stats_frame, text=f"Incorrect: {self.incorrect_count}", font=("Arial", 20), bg='lightblue', fg='red')
+     self.incorrect_stats_label.pack(side='left', padx=10)
+
+
+
+
+     self.correct_answer = 0
+     self.answers = []
+
+
+
+
+     self.next_question()
+
+
+
+
+ def go_back(self):
+     self.root.destroy()
+
+
+
+
+ def generate_question(self):
+     num1 = random.randint(1, 9)
+     tens2 = random.randint(1, 9)
+     units2 = random.randint(0, 9)
+     num2 = tens2 * 10 + units2
+     self.num1 = num1
+     self.num2 = num2
+     self.correct_answer = num1 - num2
+
+
+
+
+ def next_question(self):
+     self.generate_question()
+     self.question_label.config(text=f"{self.num1} - {self.num2} = ?")
+     self.result_label.config(text="")
+
+
+
+
+     wrong_answers = [self.correct_answer + delta for delta in (1, 10, 11, -1, -10)]
+     self.answers = wrong_answers + [self.correct_answer]
+     random.shuffle(self.answers)
+
+
+
+
+     for idx, button in enumerate(self.option_buttons):
+         button.config(text=str(self.answers[idx]), command=lambda ans=self.answers[idx]: self.check_answer(ans), state='normal')
+
+
+
+
+ def check_answer(self, selected_answer):
+     for button in self.option_buttons:
+         button.config(state='disabled')
+     if selected_answer == self.correct_answer:
+         self.result_label.config(text="Correct! Well done!", fg='green')
+         self.root.after(2000, lambda: self.finish_turn(True))
+     else:
+         self.result_label.config(text=f"Incorrect. The correct answer is: {self.correct_answer}", fg='red')
+         self.root.after(2000, lambda: self.finish_turn(False))
+
+
+
+
+ def finish_turn(self, was_correct):
+     if was_correct:
+         self.correct_count += 1
+     else:
+         self.incorrect_count += 1
+     self.update_stats()
+     self.next_question()
+
+
+
+
+ def update_stats(self):
+     self.correct_stats_label.config(text=f"Correct: {self.correct_count}")
+     self.incorrect_stats_label.config(text=f"Incorrect: {self.incorrect_count}")
+
+
+class NoBorrowSubtractionScreen:
+ def __init__(self, root):
+     self.root = root
+     self.root.title("Минус: 1-значное из 2-значного")
+     self.root.geometry("500x700")
+     self.root.configure(bg='lightblue')
+
+
+
+
+     self.back_button = tk.Button(root, text="Back", font=("Arial", 16), command=self.go_back)
+     self.back_button.pack(pady=10, anchor='nw', padx=10)
+
+
+
+
+     self.question_label = tk.Label(root, text="", font=("Arial", 32), bg='lightblue')
+     self.question_label.pack(pady=10)
+
+
+
+
+     self.buttons_frame = tk.Frame(root, bg='lightblue')
+     self.buttons_frame.pack(pady=20)
+
+
+
+
+     self.option_buttons = []
+     for _ in range(6):
+         button = tk.Button(self.buttons_frame, text="", font=("Arial", 24), width=5, height=2)
+         button.grid(row=_//3, column=_%3, padx=10, pady=10)
+         self.option_buttons.append(button)
+
+
+
+
+     self.result_label = tk.Label(root, text="", font=("Arial", 24), bg='lightblue')
+     self.result_label.pack(pady=20)
+
+
+
+
+     self.stats_frame = tk.Frame(root, bg='lightblue')
+     self.stats_frame.pack(pady=10)
+
+
+
+
+     self.correct_count = 0
+     self.incorrect_count = 0
+     self.correct_stats_label = tk.Label(self.stats_frame, text=f"Correct: {self.correct_count}", font=("Arial", 20), bg='lightblue', fg='green')
+     self.correct_stats_label.pack(side='left', padx=10)
+     self.incorrect_stats_label = tk.Label(self.stats_frame, text=f"Incorrect: {self.incorrect_count}", font=("Arial", 20), bg='lightblue', fg='red')
+     self.incorrect_stats_label.pack(side='left', padx=10)
+
+
+
+
+     self.correct_answer = 0
+     self.answers = []
+
+
+
+
+     self.next_question()
+
+
+
+
+ def go_back(self):
+     self.root.destroy()
+
+
+
+
+ def generate_question(self):
+     num1 = random.randint(1, 9)
+     tens2 = random.randint(1, 9)
+     units2 = random.randint(num1, 9)  # units2 >= num1: no borrow across the tens digit
+     num2 = tens2 * 10 + units2
+     self.num1 = num1
+     self.num2 = num2
+     self.correct_answer = num1 - num2
+
+
+
+
+ def next_question(self):
+     self.generate_question()
+     self.question_label.config(text=f"{self.num1} - {self.num2} = ?")
+     self.result_label.config(text="")
+
+
+
+
+     wrong_answers = [self.correct_answer + delta for delta in (1, 10, 11, -1, -10)]
+     self.answers = wrong_answers + [self.correct_answer]
+     random.shuffle(self.answers)
+
+
+
+
+     for idx, button in enumerate(self.option_buttons):
+         button.config(text=str(self.answers[idx]), command=lambda ans=self.answers[idx]: self.check_answer(ans), state='normal')
+
+
+
+
+ def check_answer(self, selected_answer):
+     for button in self.option_buttons:
+         button.config(state='disabled')
+     if selected_answer == self.correct_answer:
+         self.result_label.config(text="Correct! Well done!", fg='green')
+         self.root.after(2000, lambda: self.finish_turn(True))
+     else:
+         self.result_label.config(text=f"Incorrect. The correct answer is: {self.correct_answer}", fg='red')
+         self.root.after(2000, lambda: self.finish_turn(False))
+
+
+
+
+ def finish_turn(self, was_correct):
+     if was_correct:
+         self.correct_count += 1
+     else:
+         self.incorrect_count += 1
+     self.update_stats()
+     self.next_question()
+
+
+
+
+ def update_stats(self):
+     self.correct_stats_label.config(text=f"Correct: {self.correct_count}")
+     self.incorrect_stats_label.config(text=f"Incorrect: {self.incorrect_count}")
 
 
 
