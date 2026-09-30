@@ -388,7 +388,9 @@ class AdditionScreen:
       self.num1 = a + firstDegree * 10
       self.num2 = b + secondDegree * 10
       self.correct_answer = self.num1 + self.num2
-      if self.correct_answer < 100:
+      if a + b == 10:
+          continue
+      elif self.correct_answer < 100:
           break
 
 
@@ -1061,9 +1063,9 @@ class TwoDigitSubtractionScreen:
      tries = 0
      while True:
          tens1 = random.randint(1, 9)
-         units1 = random.randint(0, 9)
+         units1 = random.randint(1, 9)
          tens2 = random.randint(1, 9)
-         units2 = random.randint(0, 9)
+         units2 = random.randint(1, 9)
          num1 = tens1 * 10 + units1
          num2 = tens2 * 10 + units2
          result = num1 - num2
