@@ -35,9 +35,9 @@ class MathTrainer:
      tk.Button(self.frame, text="Random via 10", font=("Arial", 18), width=20, height=2,
                command=self.open_random_via_10_screen).grid(row=0, column=2, padx=10, pady=5)
      tk.Button(self.frame, text="Минус у 2х значных чисел", font=("Arial", 18), width=20, height=2,
-               command=self.open_two_digit_subtraction_screen).grid(row=0, column=3, padx=10, pady=5)
+               command=self.open_two_digit_subtraction_screen).grid(row=1, column=0, padx=10, pady=5)
      tk.Button(self.frame, text="Минус с отрицательным результатом", font=("Arial", 18), width=20, height=2,
-               command=self.open_negative_result_subtraction_screen).grid(row=0, column=4, padx=10, pady=5)
+               command=self.open_negative_result_subtraction_screen).grid(row=2, column=0, padx=10, pady=5)
 
 
 
@@ -53,7 +53,7 @@ class MathTrainer:
 
 
      tk.Button(self.frame, text="Минус: 1-значное из 2-значного", font=("Arial", 18), width=20, height=2,
-               command=self.open_no_borrow_subtraction_screen).grid(row=10, column=0, padx=10, pady=5)
+               command=self.open_no_borrow_subtraction_screen).grid(row=3, column=0, padx=10, pady=5)
 
 
 
