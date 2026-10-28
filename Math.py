@@ -1062,8 +1062,16 @@ class TwoDigitSubtractionScreen:
 
 
 
+     self.reset_button = tk.Button(root, text="Сбросить", font=("Arial", 16), command=self.reset_stats)
+     self.reset_button.pack(pady=5)
+
+
+
+
      self.correct_answer = 0
      self.answers = []
+     self.pending_after = None
+     self.pending_counts = False
 
 
 
@@ -1074,13 +1082,32 @@ class TwoDigitSubtractionScreen:
 
 
  def go_back(self):
+     self.cancel_pending()
      self.root.destroy()
 
 
 
 
+ def cancel_pending(self):
+     # after_cancel защитный: таймер Toplevel умирает вместе с окном, но полагаться на это не стоит
+     if self.pending_after is not None:
+         self.root.after_cancel(self.pending_after)
+         self.pending_after = None
+
+
+
+
+ def reset_stats(self):
+     self.correct_count = 0
+     self.incorrect_count = 0
+     self.pending_counts = False
+     self.update_stats()
+
+
+
+
  def generate_question(self):
-     require_borrow = random.random() < 0.9
+     require_borrow = random.random() < 0.8
      tries = 0
      while True:
          tens1 = random.randint(1, 9)
@@ -1137,21 +1164,25 @@ class TwoDigitSubtractionScreen:
  def check_answer(self, selected_answer):
      for button in self.option_buttons:
          button.config(state='disabled')
+     self.pending_counts = True
      if selected_answer == self.correct_answer:
          self.result_label.config(text="Correct! Well done!", fg='green')
-         self.root.after(2000, lambda: self.finish_turn(True))
+         self.pending_after = self.root.after(2000, lambda: self.finish_turn(True))
      else:
          self.result_label.config(text=f"Incorrect. The correct answer is: {self.correct_answer}", fg='red')
-         self.root.after(2000, lambda: self.finish_turn(False))
+         self.pending_after = self.root.after(2000, lambda: self.finish_turn(False))
 
 
 
 
  def finish_turn(self, was_correct):
-     if was_correct:
-         self.correct_count += 1
-     else:
-         self.incorrect_count += 1
+     self.pending_after = None
+     if self.pending_counts:
+         if was_correct:
+             self.correct_count += 1
+         else:
+             self.incorrect_count += 1
+     self.pending_counts = False
      self.update_stats()
      self.next_question()
 
