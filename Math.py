@@ -58,6 +58,14 @@ class MathTrainer:
 
 
 
+     # Multiplication Buttons
+     for i in range(1, 10):
+         tk.Button(self.frame, text=f"Умножение на {i}", font=("Arial", 18), width=20, height=2,
+                   command=self.make_multiplication_callback(i)).grid(row=i, column=3, padx=10, pady=5)
+
+
+
+
  def open_addition_screen(self):
      addition_window = tk.Toplevel(self.root)
      AdditionScreen(addition_window)
@@ -122,6 +130,19 @@ class MathTrainer:
  def open_deduction1020_screen(self, max_number):
      deduction_window = tk.Toplevel(self.root)
      Deduction1020Screen(deduction_window, max_number)
+
+
+
+
+ def make_multiplication_callback(self, multiplier):
+     return lambda: self.open_multiplication_screen(multiplier)
+
+
+
+
+ def open_multiplication_screen(self, multiplier):
+     multiplication_window = tk.Toplevel(self.root)
+     MultiplicationScreen(multiplication_window, multiplier)
 
 
 
@@ -1407,6 +1428,208 @@ class NoBorrowSubtractionScreen:
          self.correct_count += 1
      else:
          self.incorrect_count += 1
+     self.update_stats()
+     self.next_question()
+
+
+
+
+ def update_stats(self):
+     self.correct_stats_label.config(text=f"Correct: {self.correct_count}")
+     self.incorrect_stats_label.config(text=f"Incorrect: {self.incorrect_count}")
+
+
+
+
+class MultiplicationScreen:
+ def __init__(self, root, multiplier):
+     self.root = root
+     self.multiplier = multiplier
+     self.root.title(f"Умножение на {multiplier}")
+     self.root.geometry("500x700")
+     self.root.configure(bg='lightblue')
+
+
+
+
+     self.back_button = tk.Button(root, text="Back", font=("Arial", 16), command=self.go_back)
+     self.back_button.pack(pady=10, anchor='nw', padx=10)
+
+
+
+
+     self.question_label = tk.Label(root, text="", font=("Arial", 32), bg='lightblue')
+     self.question_label.pack(pady=10)
+
+
+
+
+     self.buttons_frame = tk.Frame(root, bg='lightblue')
+     self.buttons_frame.pack(pady=20)
+
+
+
+
+     self.option_buttons = []
+     for _ in range(6):
+         button = tk.Button(self.buttons_frame, text="", font=("Arial", 24), width=5, height=2)
+         button.grid(row=_//3, column=_%3, padx=10, pady=10)
+         self.option_buttons.append(button)
+
+
+
+
+     self.result_label = tk.Label(root, text="", font=("Arial", 24), bg='lightblue')
+     self.result_label.pack(pady=20)
+
+
+
+
+     self.stats_frame = tk.Frame(root, bg='lightblue')
+     self.stats_frame.pack(pady=10)
+
+
+
+
+     self.correct_count = 0
+     self.incorrect_count = 0
+     self.correct_stats_label = tk.Label(self.stats_frame, text=f"Correct: {self.correct_count}", font=("Arial", 20), bg='lightblue', fg='green')
+     self.correct_stats_label.pack(side='left', padx=10)
+     self.incorrect_stats_label = tk.Label(self.stats_frame, text=f"Incorrect: {self.incorrect_count}", font=("Arial", 20), bg='lightblue', fg='red')
+     self.incorrect_stats_label.pack(side='left', padx=10)
+
+
+
+
+     self.reset_button = tk.Button(root, text="Сбросить", font=("Arial", 16), command=self.reset_stats)
+     self.reset_button.pack(pady=5)
+
+
+
+
+     self.correct_answer = 0
+     self.answers = []
+     self.previous_b = None
+     self.pending_after = None
+     self.pending_counts = False
+
+
+
+
+     self.next_question()
+
+
+
+
+ def go_back(self):
+     self.cancel_pending()
+     self.root.destroy()
+
+
+
+
+ def cancel_pending(self):
+     # after_cancel защитный: таймер Toplevel умирает вместе с окном, но полагаться на это не стоит
+     if self.pending_after is not None:
+         self.root.after_cancel(self.pending_after)
+         self.pending_after = None
+
+
+
+
+ def reset_stats(self):
+     self.correct_count = 0
+     self.incorrect_count = 0
+     self.pending_counts = False
+     self.update_stats()
+
+
+
+
+ def pick_second_multiplier(self):
+     # previous_b исключён до выбора, поэтому перевыбора в цикле не нужно
+     b = random.choice([value for value in range(2, 10) if value != self.previous_b])
+     self.previous_b = b
+     return b
+
+
+
+
+ def build_answer_options(self, a, b):
+     correct = a * b
+     # первый множитель в дистракторах плавает намеренно: это соседние строки таблицы
+     formulas = [(a - 1) * b, (a + 1) * b, a * (b - 1), a * (b + 1), a * b - 1, a * b + 1]
+     drop = random.randrange(6)
+     candidates = [formulas[index] for index in range(6) if index != drop]
+     options = []
+     for candidate in candidates:
+         if candidate != correct and candidate != 0 and candidate not in options:
+             options.append(candidate)
+     k = 2
+     while len(options) < 5:
+         if k > 50:
+             # недостижимо при a 1..9 и b 2..9: максимальная фактическая глубина добора 3 (прогон 432 комбинаций)
+             break
+         for candidate in (correct + k, correct - k):
+             if len(options) < 5 and candidate != correct and candidate > 0 and candidate not in options:
+                 options.append(candidate)
+         k += 1
+     options.append(correct)
+     random.shuffle(options)
+     return options
+
+
+
+
+ def generate_question(self):
+     self.num1 = self.multiplier
+     self.num2 = self.pick_second_multiplier()
+     self.correct_answer = self.num1 * self.num2
+
+
+
+
+ def next_question(self):
+     self.generate_question()
+     self.question_label.config(text=f"{self.num1} × {self.num2} = ?")
+     self.result_label.config(text="")
+
+
+
+
+     self.answers = self.build_answer_options(self.num1, self.num2)
+
+
+
+
+     for idx, button in enumerate(self.option_buttons):
+         button.config(text=str(self.answers[idx]), command=lambda ans=self.answers[idx]: self.check_answer(ans), state='normal')
+
+
+
+
+ def check_answer(self, selected_answer):
+     for button in self.option_buttons:
+         button.config(state='disabled')
+     self.pending_counts = True
+     if selected_answer == self.correct_answer:
+         self.result_label.config(text="Correct! Well done!", fg='green')
+         self.pending_after = self.root.after(2000, lambda: self.finish_turn(True))
+     else:
+         self.result_label.config(text=f"Incorrect. The correct answer is: {self.correct_answer}", fg='red')
+         self.pending_after = self.root.after(2000, lambda: self.finish_turn(False))
+
+
+
+
+ def finish_turn(self, was_correct):
+     self.pending_after = None
+     if self.pending_counts:
+         if was_correct:
+             self.correct_count += 1
+         else:
+             self.incorrect_count += 1
+     self.pending_counts = False
      self.update_stats()
      self.next_question()
 
